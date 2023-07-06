@@ -23,7 +23,7 @@ const Dynamo = {
       throw Error(`There was an error fetching the data for ID of ${ID} from ${TableName}`);
     })
 
-    if (!data || data.Item) {
+    if (!data || !data.Item) {
       throw Error(`There was an error fetching the data for ID of ${ID} from ${TableName}`);
     }
     return data.Item;
