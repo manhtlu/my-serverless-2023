@@ -7,11 +7,29 @@ provider:
   profile: serverlessUser
   environment:
     tableName: ${self:custom.tableName}
+    bucket: ${self:custom.bucketName}
   iamRoleStatements:
     - Effect: Allow
       Action:
         - dynamodb:*
-      Resource: '*'
+        - 's3:GetObject'
+        - 's3:PutObject'
+      Resource:
+        - arn:aws:s3:::${self:custom.bucketName}/*
+        - arn:aws:dynamodb:us-east-1:*:table/${self:custom.tableName}
+  apiGateway:
+    apiKeys:
+      - name: 'Free'
+        value: '3487589347589374589374598'
+      - name: 'Paid'
+        value: 'p-893475893475389475893'
+    usagePlan:
+      quota:
+        limit: 1000
+        period: MONTH
+      throttle:
+        rateLimit: 5
+        burstLimit: 20
 
 plugins:
   - serverless-s3-sync
@@ -21,9 +39,10 @@ package:
   individually: true
 
 custom:
-  tableName: player-points  
+  tableName: player-points
+  bucketName: mysls2023uploadbucket
   s3Sync:
-    - bucketName: mysls2023uploadbucket
+    - bucketName: ${self:custom.bucketName}
       localDir: UploadData
 
 functions:
@@ -41,13 +60,36 @@ functions:
           path: get-player-score/{id}
           method: GET
           cors: true
+  createPlayerScore:
+    handler: lambdas/endpoints/createPlayerScore.handler
+    events:
+      - http:
+          path: create-player-score/{id}
+          method: POST
+          cors: true
+  createFile:
+    handler: lambdas/endpoints/createFile.handler
+    events:
+      - http:
+          path: create-file/{fileName}
+          method: POST
+          cors: true
+          private: true
+  getFile:
+    handler: lambdas/endpoints/getFile.handler
+    events:
+      - http:
+          path: get-file/{fileName}
+          method: GET
+          cors: true
+          private: true
 
 resources:
   Resources:
     MySls2023BucketUpload:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: mysls2023uploadbucket
+        BucketName: ${self:custom.bucketName}
     MySls2023DynamoDB:
       Type: AWS::DynamoDB::Table
       Properties:
